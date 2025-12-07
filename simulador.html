@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Falante - COMPLETO</title>
+    <style>
+        /* ESTILO (CSS) */
+        body {
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .phone-container {
+            background-color: #111;
+            width: 320px;
+            height: 620px;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 5px solid #444;
+        }
+
+        .screen {
+            background-color: #f8f9fa;
+            height: 200px;
+            border-radius: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            position: relative;
+        }
+
+        #status-bar {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #display {
+            font-size: 38px;
+            text-align: center;
+            border: none;
+            width: 100%;
+            outline: none;
+            background: transparent;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #message-area {
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            min-height: 50px;
+        }
+
+        #subtitle {
+            font-size: 13px;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 10px;
+        }
+
+        .key {
+            padding: 15px;
+            font-size: 24px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background-color: #3a3a3a;
+            color: white;
+            transition: 0.1s;
+        }
+
+        .key:active { background-color: #fff; color: #000; }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .call-btn {
+            background-color: #2ecc71;
+            border-radius: 50px;
+            width: 100%;
+            font-size: 20px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 15px;
+            font-weight: bold;
+        }
+
+        .call-btn:hover { background-color: #27ae60; }
+        .clear-btn {
+            background-color: #e74c3c;
+            border-radius: 50px;
+            width: 80px;
+            font-size: 20px;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="screen">
+            <div id="status-bar">Simulador de Voz - V2.0</div>
+            <input type="text" id="display" readonly placeholder="...">
+            <div id="message-area"></div>
+            <div id="subtitle"></div>
+        </div>
+
+        <div class="keypad">
+            <button class="key" onclick="addNumber('1')">1</button>
+            <button class="key" onclick="addNumber('2')">2</button>
+            <button class="key" onclick="addNumber('3')">3</button>
+            <button class="key" onclick="addNumber('4')">4</button>
+            <button class="key" onclick="addNumber('5')">5</button>
+            <button class="key" onclick="addNumber('6')">6</button>
+            <button class="key" onclick="addNumber('7')">7</button>
+            <button class="key" onclick="addNumber('8')">8</button>
+            <button class="key" onclick="addNumber('9')">9</button>
+            <button class="key" onclick="addNumber('*')">*</button>
+            <button class="key" onclick="addNumber('0')">0</button>
+            <button class="key" onclick="addNumber('#')">#</button>
+        </div>
+
+        <div class="actions">
+            <button class="call-btn" onclick="makeCall()">📞 Ligar</button>
+            <button class="clear-btn" onclick="clearScreen()">⌫</button>
+        </div>
+    </div>
+
+    <script>
+        let displayElement = document.getElementById('display');
+        let messageElement = document.getElementById('message-area');
+        let subtitleElement = document.getElementById('subtitle');
+
+        function addNumber(num) {
+            if (displayElement.value.length < 5) {
+                displayElement.value += num;
+            }
+        }
+
+        function clearScreen() {
+            displayElement.value = '';
+            messageElement.innerText = '';
+            subtitleElement.innerText = '';
+            window.speechSynthesis.cancel();
+        }
+
+        function makeCall() {
+            let number = displayElement.value;
+            if(number === "") return;
+
+            messageElement.innerText = "Chamando...";
+            messageElement.style.color = '#333';
+            subtitleElement.innerText = "";
+            window.speechSynthesis.cancel();
+
+            setTimeout(() => {
+                checkNumber(number);
+            }, 1000);
+        }
+
+        // --- SISTEMA DE VOZ ---
+        function falar(texto, genero) {
+            let fala = new SpeechSynthesisUtterance();
+            fala.text = texto;
+            fala.lang = 'pt-BR';
+            fala.rate = 1;
+
+            let vozes = window.speechSynthesis.getVoices();
+            let vozSelecionada = null;
+
+            // Lógica para seleção de voz (funciona melhor em navegadores modernos)
+            if (genero === 'masculina') {
+                vozSelecionada = vozes.find(v => v.name.includes('Daniel') || v.name.includes('Male'));
+            } else {
+                vozSelecionada = vozes.find(v => v.name.includes('Maria') || v.name.includes('Google') || v.name.includes('Female'));
+            }
+
+            if (vozSelecionada) {
+                fala.voice = vozSelecionada;
+            }
+
+            window.speechSynthesis.speak(fala);
+        }
+
+        function checkNumber(num) {
+            let nomeServico = "";
+            let frase = "";
+            let genero = "";
+            let cor = "#333";
+
+            // TABELA COMPLETA DE NÚMEROS DE EMERGÊNCIA
+            switch(num) {
+                case '190':
+                    nomeServico = "POLÍCIA MILITAR";
+                    frase = "Polícia Militar, qual é a sua emergência?";
+                    genero = "masculina";
+                    cor = "red";
+                    break;
+                case '192':
+                    nomeServico = "SAMU (AMBULÂNCIA)";
+                    frase = "SAMU, qual o estado da vítima e sua localização?";
+                    genero = "feminina";
+                    cor = "#e67e22"; 
+                    break;
+                case '193':
+                    nomeServico = "CORPO DE BOMBEIROS";
+                    frase = "Corpo de Bombeiros, informe o tipo de ocorrência e o endereço.";
+                    genero = "masculina";
+                    cor = "red";
+                    break;
+                case '199':
+                    nomeServico = "DEFESA CIVIL";
+                    frase = "Defesa Civil, qual situação de risco está ocorrendo?";
+                    genero = "masculina";
+                    cor = "orange";
+                    break;
+                case '136':
+                    nomeServico = "MINISTÉRIO DA SAÚDE";
+                    frase = "Ministério da Saúde, como posso orientar você?";
+                    genero = "feminina";
+                    cor = "#2980b9";
+                    break;
+                case '180':
+                    nomeServico = "ATENDIMENTO À MULHER";
+                    frase = "Central de Atendimento à Mulher, qual tipo de violência deseja reportar?";
+                    genero = "feminina";
+                    cor = "purple";
+                    break;
+                case '181':
+                    nomeServico = "DISQUE DENÚNCIA (Polícia)";
+                    frase = "Disque Denúncia, qual informação deseja registrar?";
+                    genero = "masculina";
+                    cor = "gray";
+                    break;
+                // NOVOS NÚMEROS ADICIONADOS
+                case '191':
+                    nomeServico = "POLÍCIA RODOVIÁRIA FEDERAL (PRF)";
+                    frase = "Polícia Rodoviária Federal, há feridos no local?";
+                    genero = "masculina";
+                    cor = "#d4ac0d"; // Amarelo
+                    break;
+                case '194':
+                    nomeServico = "POLÍCIA FEDERAL (PF)";
+                    frase = "Polícia Federal, você tem um protocolo de denúncia?";
+                    genero = "masculina";
+                    cor = "black";
+                    break;
+                case '197':
+                    nomeServico = "POLÍCIA CIVIL";
+                    frase = "Polícia Civil, qual crime você presenciou?";
+                    genero = "feminina";
+                    cor = "black";
+                    break;
+                case '198':
+                    nomeServico = "POLÍCIA RODOVIÁRIA ESTADUAL (PRE)";
+                    frase = "Polícia Rodoviária Estadual, qual é a rodovia?";
+                    genero = "feminina";
+                    cor = "#d4ac0d"; // Amarelo
+                    break;
+                case '188':
+                    nomeServico = "CVV - VALORIZAÇÃO DA VIDA";
+                    frase = "Centro de Valorização da Vida, estamos aqui para te ouvir. Não se preocupe.";
+                    genero = "feminina";
+                    cor = "green";
+                    break;
+                case '100':
+                    nomeServico = "DIREITOS HUMANOS (Disque 100)";
+                    frase = "Disque 100, qual violação de direitos humanos você deseja reportar?";
+                    genero = "feminina";
+                    cor = "blue";
+                    break;
+                default:
+                    nomeServico = "NÚMERO INVÁLIDO OU NÃO ATIVO";
+                    frase = "Este número não corresponde a um serviço de emergência.";
+                    genero = "feminina";
+                    cor = "gray";
+            }
+
+            // Atualiza a tela e fala
+            messageElement.innerText = nomeServico;
+            messageElement.style.color = cor;
+            subtitleElement.innerText = `"${frase}"`;
+            
+            falar(frase, genero);
+        }
+
+        window.speechSynthesis.getVoices();
+    </script>
+</body>
+</html>
